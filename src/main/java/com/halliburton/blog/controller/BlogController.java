@@ -48,7 +48,7 @@ public class BlogController {
             @ApiResponse(responseCode = "500", description = "Internal Error",
                     content = @Content)})
 
-    @GetMapping(value = "/blogs/{id}", produces = {"application/json"})
+    @GetMapping(value = "/blogs/{id}", produces = "application/json")
     public ResponseEntity<BlogModel> getBlogById(
             @Parameter(description = "id of blog to be searched")
             @PathVariable Long id) {
@@ -69,7 +69,7 @@ public class BlogController {
             @ApiResponse(responseCode = "500", description = "Internal Error",
                     content = @Content)})
 
-    @GetMapping(value = "/blogs", produces = {"application/json"})
+    @GetMapping(value = "/blogs", produces = "application/json")
     public ResponseEntity<CollectionModel<BlogModel>> getAllBlogs(
             @Parameter(description = "author of post for search")
             @RequestParam(required = false, name = "author") String author,

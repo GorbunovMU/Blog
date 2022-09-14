@@ -1,4 +1,4 @@
-package com.halliburton.blog.assembler;
+package com.halliburton.blog.modelassembler;
 
 import com.halliburton.blog.controller.BlogController;
 import com.halliburton.blog.controller.PostController;

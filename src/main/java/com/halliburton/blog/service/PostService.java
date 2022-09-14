@@ -1,6 +1,6 @@
 package com.halliburton.blog.service;
 
-import com.halliburton.blog.assembler.PostModelAssembler;
+import com.halliburton.blog.modelassembler.PostModelAssembler;
 import com.halliburton.blog.controller.BlogController;
 import com.halliburton.blog.controller.PostController;
 import com.halliburton.blog.dao.BlogRepository;
