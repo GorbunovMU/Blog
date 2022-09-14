@@ -1,6 +1,5 @@
 package com.halliburton.blog.service;
 
-import com.halliburton.blog.modelassembler.BlogModelAssembler;
 import com.halliburton.blog.dao.BlogRepository;
 import com.halliburton.blog.dao.PostRepository;
 import com.halliburton.blog.dto.BlogDtoRequest;
@@ -8,15 +7,13 @@ import com.halliburton.blog.dto.BlogDtoRequestFull;
 import com.halliburton.blog.dto.BlogModel;
 import com.halliburton.blog.model.BlogEntity;
 import com.halliburton.blog.model.PostEntity;
+import com.halliburton.blog.modelassembler.BlogModelAssembler;
 import org.springframework.data.domain.Example;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
-import javax.transaction.Transactional;
 import java.time.LocalDate;
-import java.time.ZoneId;
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -43,20 +40,13 @@ public class BlogService {
                 .map(blogModelAssembler::toModel);
     }
 
-    public CollectionModel<BlogModel> getAllBlogs(String author, Date date) {
+    public CollectionModel<BlogModel> getAllBlogs(String author, LocalDate date) {
         List<BlogEntity> blogEntities;
-        LocalDate publishedOn = null;
-        if (date != null) {
-            publishedOn = date.toInstant()
-                    .atZone(ZoneId.systemDefault())
-                    .toLocalDate();
-        }
-
         if (author != null || date != null) {
             PostEntity postEntity = PostEntity
                     .builder()
                     .author(author)
-                    .publishedOn(publishedOn)
+                    .publishedOn(date)
                     .build();
             blogEntities = postRepository.findAll(Example.of(postEntity)).stream()
                     .map(PostEntity::getBlog)
@@ -76,7 +66,8 @@ public class BlogService {
                 .description(blog.getDescription())
                 .build();
 
-        return blogModelAssembler.toModel(blogRepository.save(blogEntity));
+        BlogEntity savedBlogEntity = blogRepository.save(blogEntity);
+        return blogModelAssembler.toModel(savedBlogEntity);
     }
 
     public boolean isTitlePresent(BlogDtoRequest blog) {
@@ -135,7 +126,6 @@ public class BlogService {
         return false;
     }
 
-    @Transactional
     public void deleteAllBlog() {
         blogRepository.deleteAll();
     }

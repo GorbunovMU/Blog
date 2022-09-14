@@ -179,6 +179,7 @@ public class BlogControllerTest {
     public void givenJsonObject_whenCreateBlog_thenReturnBadRequestResponse() throws Exception {
 
         fakeJsonObject.put("description", null);
+        fakeJsonObject.put("blogTitle", null);
 
         this.mvc.perform(post("/api/v1.0.0/blogs")
                         .contentType(MediaType.APPLICATION_JSON)

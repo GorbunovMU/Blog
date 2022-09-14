@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.persistence.EntityNotFoundException;
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -76,7 +76,7 @@ public class BlogController {
 
             @Parameter(description = "publication date for search")
             @RequestParam(required = false, name = "date")
-            @DateTimeFormat(pattern = "yyyy-MM-dd") Date date) {
+            @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date) {
 
         CollectionModel<BlogModel> blogModels = blogService.getAllBlogs(author, date);
         if (blogModels.getContent().isEmpty()) {

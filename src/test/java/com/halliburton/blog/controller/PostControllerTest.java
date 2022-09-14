@@ -16,13 +16,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.mapping.PropertyReferenceException;
+import org.springframework.data.util.TypeInformation;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.util.NestedServletException;
 
 import javax.persistence.EntityNotFoundException;
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -143,6 +148,72 @@ public class PostControllerTest {
                 .andExpect(status().isNoContent());
     }
 
+    @Test
+    public void givenPostItems_whenGetAllPosts_thenReturnInternalServerErrorResponse() throws Exception {
+        CollectionModel<PostModel> postModels = CollectionModel.empty();
+        given(postService.getAllPosts(Optional.empty())).willReturn(null);
+
+        this.mvc.perform(get("/api/v1.0.0/posts")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isInternalServerError());
+    }
+
+    @Test
+    public void givenPostItems_whenGetAllPostsByGivenBlog_thenReturnJsonArray() throws Exception {
+        String sort = "id:desc";
+        List<PostEntity> allPosts = Collections.singletonList(fakeEntityObject);
+        CollectionModel<PostModel> postModels = postModelAssembler.toCollectionModel(allPosts);
+        given(postService.getAllPostsByGivenBlog(defaultBlogId, new String[]{sort})).willReturn(postModels);
+
+        this.mvc.perform(get("/api/v1.0.0/blogs/"+ defaultBlogId+"/posts")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(sort))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.*", hasSize(2)))
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.content[0].id", is(fakeEntityObject.getId().intValue())))
+                .andExpect(jsonPath("$.content[0].postTitle", is(fakeEntityObject.getPostTitle())));
+
+    }
+
+    @Test
+    public void givenPostItems_whenGetAllPostsByGivenBlog_thenReturnNoContentResponse() throws Exception {
+        String sort = "id:desc";
+        given(postService.getAllPostsByGivenBlog(defaultBlogId, new String[]{sort})).willReturn(CollectionModel.empty());
+
+        this.mvc.perform(get("/api/v1.0.0/blogs/"+ defaultBlogId+"/posts")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(sort))
+                .andExpect(status().isNoContent());
+
+    }
+
+    @Test
+    public void givenPostItems_whenGetAllPostsByGivenBlog_thenReturnNotFoundResponse() throws Exception {
+        String sort = "id:desc";
+        given(postService.getAllPostsByGivenBlog(defaultBlogId, new String[]{sort}))
+                .willThrow(EntityNotFoundException.class);
+
+        this.mvc.perform(get("/api/v1.0.0/blogs/"+ defaultBlogId+"/posts")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(sort))
+                .andExpect(status().isNotFound());
+
+    }
+
+    @Test(expected = NestedServletException.class)
+    public void givenPostItems_whenGetAllPostsByGivenBlog_thenReturnBadRequestResponse() throws Exception {
+
+        String sort = "id:desc";
+        given(postService.getAllPostsByGivenBlog(defaultBlogId, new String[]{sort}))
+                .willThrow(PropertyReferenceException.class);
+
+        this.mvc.perform(get("/api/v1.0.0/blogs/"+ defaultBlogId+"/posts")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(sort))
+                .andExpect(status().isBadRequest());
+
+    }
 
     @Test
     public void givenJsonObject_whenCreatePost_thenReturnJsonObject() throws Exception {
@@ -176,12 +247,29 @@ public class PostControllerTest {
     @Test
     public void givenJsonObject_whenCreatePost_thenReturnBadRequestResponse() throws Exception {
 
+        fakeJsonObject.put("postTitle", null);
         fakeJsonObject.put("postBody", null);
+        fakeJsonObject.put("postConclusion", null);
+        fakeJsonObject.put("author", null);
+        fakeJsonObject.put("publishedOn", null);
 
         this.mvc.perform(post("/api/v1.0.0/blogs/" + defaultBlogId + "/posts")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(fakeJsonObject.toString()))
                 .andExpect(status().isBadRequest());
+
+    }
+
+    @Test
+    public void givenJsonObject_whenCreatePost_thenReturnNotFoundResponse() throws Exception {
+
+        given(postService.createPost(defaultBlogId, fakeDtoObject))
+                .willThrow(EntityNotFoundException.class);
+
+        this.mvc.perform(post("/api/v1.0.0/blogs/" + defaultBlogId + "/posts")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(fakeJsonObject.toString()))
+                .andExpect(status().isNotFound());
 
     }
 
@@ -320,10 +408,17 @@ public class PostControllerTest {
     }
 
     @Test
-    public void givenEmpty_whenDeleteAllPost_thenReturnBadRequestResponse() throws Exception {
+    public void givenEmpty_whenDeleteAllPostByBlogId_thenReturnBadRequestResponse() throws Exception {
         given(postService.deleteAllPostByBlogId(defaultBlogId)).willReturn(false);
 
         this.mvc.perform(delete("/api/v1.0.0/blogs/" + defaultBlogId + "/posts"))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void givenEmpty_whenDeleteAllPosts_thenReturnOkResponse() throws Exception {
+
+        this.mvc.perform(delete("/api/v1.0.0/posts"))
+                .andExpect(status().isOk());
     }
 }
