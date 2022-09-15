@@ -97,15 +97,15 @@ public class PostController {
                     content = @Content),
             @ApiResponse(responseCode = "500", description = "Internal Error",
                     content = @Content)})
-    @GetMapping(value = "/blogs/{id}/posts", produces = {"application/json"})
+    @GetMapping(value = "/blogs/{blogId}/posts", produces = {"application/json"})
     public ResponseEntity<CollectionModel<PostModel>> getAllPostsByGivenBlog(
             @Parameter(description = "id of blog to be searched")
-            @PathVariable("id") Long blog_id,
-            @Parameter(description = "array of fields to sort by direction (asc or desc)")
+            @PathVariable("blogId") Long blogId,
+            @Parameter(description = "array of Post fields to sort by direction (asc or desc)")
             @RequestParam(required = false, defaultValue = "id:desc") String[] sort) {
 
         try {
-            CollectionModel<PostModel> postModel = postService.getAllPostsByGivenBlog(blog_id, sort);
+            CollectionModel<PostModel> postModel = postService.getAllPostsByGivenBlog(blogId, sort);
             if (postModel.getContent().isEmpty()) {
                 return ResponseEntity.noContent().build();
             } else {
@@ -130,10 +130,10 @@ public class PostController {
             @ApiResponse(responseCode = "500", description = "Internal Error",
                     content = @Content)})
 
-    @PostMapping(value = "/blogs/{id}/posts", produces = {"application/json"})
+    @PostMapping(value = "/blogs/{blogId}/posts", produces = {"application/json"})
     public ResponseEntity<PostModel> createPost(
             @Parameter(description = "id of the blog where the post is being inserted")
-            @PathVariable("id") Long blog_id,
+            @PathVariable("blogId") Long blogId,
             @Parameter(description = "new post")
             @RequestBody PostDtoRequest post) {
 
@@ -142,7 +142,7 @@ public class PostController {
                     PostValidator.getNotValidFieldsForPostEntityDto(post));
         }
         try {
-            PostModel createdPost = postService.createPost(blog_id, post);
+            PostModel createdPost = postService.createPost(blogId, post);
             if (createdPost == null) {
                 return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
             } else {
@@ -262,10 +262,10 @@ public class PostController {
             @ApiResponse(responseCode = "500", description = "Internal Error",
                     content = @Content)})
 
-    @DeleteMapping(value = "/blogs/{id}/posts")
+    @DeleteMapping(value = "/blogs/{blogId}/posts")
     public ResponseEntity<String> deleteAllPostByBlogId(
             @Parameter(description = "id of the blog where all posts should be deleted")
-            @PathVariable(name = "id") Long blogId) {
+            @PathVariable(name = "blogId") Long blogId) {
 
         if (postService.deleteAllPostByBlogId(blogId)) {
             return ResponseEntity.ok("All posts with blogId = " + blogId + " deleted");
