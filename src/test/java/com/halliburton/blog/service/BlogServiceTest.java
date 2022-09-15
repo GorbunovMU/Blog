@@ -70,6 +70,9 @@ public class BlogServiceTest {
     @After
     public void tearDown() {
         blogEntity = null;
+        blogModel = null;
+        blogModelCollection = null;
+        blogDtoRequest = null;
     }
 
     @Test
